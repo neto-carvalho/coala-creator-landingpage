@@ -106,67 +106,163 @@ const cards = document.querySelectorAll('.portfolio-card');
 let isDragging = false;
 let startX = 0;
 let scrollLeft = 0;
+let animationFrameId = null;
+let velocity = 0;
+let lastX = 0;
+let lastTime = 0;
+
+// Função para scroll suave usando requestAnimationFrame
+function smoothScroll(element, target, duration = 300) {
+    const start = element.scrollLeft;
+    const distance = target - start;
+    const startTime = performance.now();
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3); // Easing cubic
+
+        element.scrollLeft = start + distance * ease;
+
+        if (progress < 1) {
+            animationFrameId = requestAnimationFrame(animate);
+        }
+    }
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(animate);
+}
 
 // Navegação por botões
 prevBtn.addEventListener('click', () => {
-    carousel.scrollBy({
-        left: -370,
-        behavior: 'smooth'
-    });
+    const cardWidth = carousel.querySelector('.portfolio-card').offsetWidth;
+    const gap = 32; // gap entre cards (2rem = 32px)
+    const scrollAmount = cardWidth + gap;
+    smoothScroll(carousel, carousel.scrollLeft - scrollAmount, 400);
 });
 
 nextBtn.addEventListener('click', () => {
-    carousel.scrollBy({
-        left: 370,
-        behavior: 'smooth'
-    });
+    const cardWidth = carousel.querySelector('.portfolio-card').offsetWidth;
+    const gap = 32;
+    const scrollAmount = cardWidth + gap;
+    smoothScroll(carousel, carousel.scrollLeft + scrollAmount, 400);
 });
 
-// Arrastar para rolar (desktop)
+// Arrastar para rolar (desktop) - melhorado
 carousel.addEventListener('mousedown', (e) => {
     isDragging = true;
     carousel.style.cursor = 'grabbing';
-    startX = e.pageX - carousel.offsetLeft;
+    carousel.style.scrollBehavior = 'auto';
+    startX = e.pageX;
     scrollLeft = carousel.scrollLeft;
+    lastX = e.pageX;
+    lastTime = performance.now();
+    velocity = 0;
+    
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
 });
 
 carousel.addEventListener('mouseleave', () => {
-    isDragging = false;
-    carousel.style.cursor = 'grab';
+    if (isDragging) {
+        isDragging = false;
+        carousel.style.cursor = 'grab';
+        carousel.style.scrollBehavior = 'smooth';
+        
+        // Aplicar momentum scrolling
+        if (Math.abs(velocity) > 0.5) {
+            smoothScroll(carousel, carousel.scrollLeft + velocity * 10, 300);
+        }
+    }
 });
 
 carousel.addEventListener('mouseup', () => {
-    isDragging = false;
-    carousel.style.cursor = 'grab';
+    if (isDragging) {
+        isDragging = false;
+        carousel.style.cursor = 'grab';
+        carousel.style.scrollBehavior = 'smooth';
+        
+        // Aplicar momentum scrolling
+        if (Math.abs(velocity) > 0.5) {
+            smoothScroll(carousel, carousel.scrollLeft + velocity * 10, 300);
+        }
+    }
 });
 
 carousel.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    const x = e.pageX - carousel.offsetLeft;
-    const walk = (x - startX) * 2;
-    carousel.scrollLeft = scrollLeft - walk;
+    
+    const currentTime = performance.now();
+    const currentX = e.pageX;
+    const deltaX = currentX - startX;
+    const deltaTime = currentTime - lastTime;
+    
+    // Calcular velocidade para momentum
+    if (deltaTime > 0) {
+        velocity = (currentX - lastX) / deltaTime;
+    }
+    
+    carousel.scrollLeft = scrollLeft - deltaX;
+    
+    lastX = currentX;
+    lastTime = currentTime;
 });
 
-// Touch events para mobile
+// Touch events para mobile - melhorado
 let touchStartX = 0;
 let touchScrollLeft = 0;
+let touchVelocity = 0;
+let touchLastX = 0;
+let touchLastTime = 0;
 
 carousel.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].pageX - carousel.offsetLeft;
+    touchStartX = e.touches[0].pageX;
     touchScrollLeft = carousel.scrollLeft;
-});
+    touchLastX = e.touches[0].pageX;
+    touchLastTime = performance.now();
+    touchVelocity = 0;
+    carousel.style.scrollBehavior = 'auto';
+    
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+}, { passive: true });
 
 carousel.addEventListener('touchmove', (e) => {
     if (!touchStartX) return;
-    const x = e.touches[0].pageX - carousel.offsetLeft;
-    const walk = (x - touchStartX) * 2;
-    carousel.scrollLeft = touchScrollLeft - walk;
-});
+    
+    const currentTime = performance.now();
+    const currentX = e.touches[0].pageX;
+    const deltaX = currentX - touchStartX;
+    const deltaTime = currentTime - touchLastTime;
+    
+    // Calcular velocidade para momentum
+    if (deltaTime > 0) {
+        touchVelocity = (currentX - touchLastX) / deltaTime;
+    }
+    
+    carousel.scrollLeft = touchScrollLeft - deltaX;
+    
+    touchLastX = currentX;
+    touchLastTime = currentTime;
+}, { passive: true });
 
 carousel.addEventListener('touchend', () => {
-    touchStartX = 0;
-});
+    if (touchStartX) {
+        carousel.style.scrollBehavior = 'smooth';
+        
+        // Aplicar momentum scrolling
+        if (Math.abs(touchVelocity) > 0.5) {
+            smoothScroll(carousel, carousel.scrollLeft + touchVelocity * 15, 300);
+        }
+        
+        touchStartX = 0;
+    }
+}, { passive: true });
 
 // Intersection Observer para animações de entrada
 const observerOptions = {
