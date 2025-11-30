@@ -1,11 +1,8 @@
-// Criar favicon circular dinamicamente
 function createCircularFavicon() {
     const canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    
-    // Criar círculo de fundo
     ctx.beginPath();
     ctx.arc(32, 32, 32, 0, 2 * Math.PI);
     ctx.fillStyle = '#FFFFFF';
@@ -13,22 +10,15 @@ function createCircularFavicon() {
     ctx.strokeStyle = '#008080';
     ctx.lineWidth = 3;
     ctx.stroke();
-    
-    // Carregar logo e desenhar dentro do círculo
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = function() {
-        // Criar clipping path circular
         ctx.save();
         ctx.beginPath();
         ctx.arc(32, 32, 29, 0, 2 * Math.PI);
         ctx.clip();
-        
-        // Desenhar logo
         ctx.drawImage(img, 0, 0, 64, 64);
         ctx.restore();
-        
-        // Converter para favicon
         const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
         link.type = 'image/png';
         link.rel = 'icon';
@@ -37,33 +27,24 @@ function createCircularFavicon() {
     };
     img.src = 'imagens/Design sem nome (2).png';
 }
-
-// Executar quando a página carregar
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', createCircularFavicon);
 } else {
     createCircularFavicon();
 }
-
-// Menu Mobile Toggle
 const menuToggle = document.getElementById('menuToggle');
 const nav = document.querySelector('.nav');
 const navLinks = document.querySelectorAll('.nav-link');
-
 menuToggle.addEventListener('click', () => {
     nav.classList.toggle('active');
     menuToggle.classList.toggle('active');
 });
-
-// Fechar menu ao clicar em um link
 navLinks.forEach(link => {
     link.addEventListener('click', () => {
         nav.classList.remove('active');
         menuToggle.classList.remove('active');
     });
 });
-
-// Scroll suave para links de navegação
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -72,7 +53,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             const headerOffset = 80;
             const elementPosition = target.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
             window.scrollTo({
                 top: offsetPosition,
                 behavior: 'smooth'
@@ -80,29 +60,21 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
-
-// Header com efeito de scroll
 let lastScroll = 0;
 const header = document.getElementById('header');
-
 window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
-    
     if (currentScroll > 100) {
         header.style.boxShadow = '0 4px 20px rgba(0, 128, 128, 0.2)';
     } else {
         header.style.boxShadow = '0 2px 10px rgba(0, 128, 128, 0.1)';
     }
-    
     lastScroll = currentScroll;
 });
-
-// Carrossel de Portfólio
 const carousel = document.getElementById('portfolioCarousel');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const cards = document.querySelectorAll('.portfolio-card');
-
 let isDragging = false;
 let startX = 0;
 let scrollLeft = 0;
@@ -110,47 +82,36 @@ let animationFrameId = null;
 let velocity = 0;
 let lastX = 0;
 let lastTime = 0;
-
-// Função para scroll suave usando requestAnimationFrame
 function smoothScroll(element, target, duration = 300) {
     const start = element.scrollLeft;
     const distance = target - start;
     const startTime = performance.now();
-
     function animate(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3); // Easing cubic
-
+        const ease = 1 - Math.pow(1 - progress, 3); 
         element.scrollLeft = start + distance * ease;
-
         if (progress < 1) {
             animationFrameId = requestAnimationFrame(animate);
         }
     }
-
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
     animationFrameId = requestAnimationFrame(animate);
 }
-
-// Navegação por botões
 prevBtn.addEventListener('click', () => {
     const cardWidth = carousel.querySelector('.portfolio-card').offsetWidth;
-    const gap = 32; // gap entre cards (2rem = 32px)
+    const gap = 32; 
     const scrollAmount = cardWidth + gap;
     smoothScroll(carousel, carousel.scrollLeft - scrollAmount, 400);
 });
-
 nextBtn.addEventListener('click', () => {
     const cardWidth = carousel.querySelector('.portfolio-card').offsetWidth;
     const gap = 32;
     const scrollAmount = cardWidth + gap;
     smoothScroll(carousel, carousel.scrollLeft + scrollAmount, 400);
 });
-
-// Arrastar para rolar (desktop) - melhorado
 carousel.addEventListener('mousedown', (e) => {
     isDragging = true;
     carousel.style.cursor = 'grabbing';
@@ -160,65 +121,49 @@ carousel.addEventListener('mousedown', (e) => {
     lastX = e.pageX;
     lastTime = performance.now();
     velocity = 0;
-    
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
 });
-
 carousel.addEventListener('mouseleave', () => {
     if (isDragging) {
         isDragging = false;
         carousel.style.cursor = 'grab';
         carousel.style.scrollBehavior = 'smooth';
-        
-        // Aplicar momentum scrolling
         if (Math.abs(velocity) > 0.5) {
             smoothScroll(carousel, carousel.scrollLeft + velocity * 10, 300);
         }
     }
 });
-
 carousel.addEventListener('mouseup', () => {
     if (isDragging) {
         isDragging = false;
         carousel.style.cursor = 'grab';
         carousel.style.scrollBehavior = 'smooth';
-        
-        // Aplicar momentum scrolling
         if (Math.abs(velocity) > 0.5) {
             smoothScroll(carousel, carousel.scrollLeft + velocity * 10, 300);
         }
     }
 });
-
 carousel.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    
     const currentTime = performance.now();
     const currentX = e.pageX;
     const deltaX = currentX - startX;
     const deltaTime = currentTime - lastTime;
-    
-    // Calcular velocidade para momentum
     if (deltaTime > 0) {
         velocity = (currentX - lastX) / deltaTime;
     }
-    
     carousel.scrollLeft = scrollLeft - deltaX;
-    
     lastX = currentX;
     lastTime = currentTime;
 });
-
-// Touch events para mobile - melhorado
 let touchStartX = 0;
 let touchScrollLeft = 0;
 let touchVelocity = 0;
 let touchLastX = 0;
 let touchLastTime = 0;
-
 carousel.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].pageX;
     touchScrollLeft = carousel.scrollLeft;
@@ -226,50 +171,36 @@ carousel.addEventListener('touchstart', (e) => {
     touchLastTime = performance.now();
     touchVelocity = 0;
     carousel.style.scrollBehavior = 'auto';
-    
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
     }
 }, { passive: true });
-
 carousel.addEventListener('touchmove', (e) => {
     if (!touchStartX) return;
-    
     const currentTime = performance.now();
     const currentX = e.touches[0].pageX;
     const deltaX = currentX - touchStartX;
     const deltaTime = currentTime - touchLastTime;
-    
-    // Calcular velocidade para momentum
     if (deltaTime > 0) {
         touchVelocity = (currentX - touchLastX) / deltaTime;
     }
-    
     carousel.scrollLeft = touchScrollLeft - deltaX;
-    
     touchLastX = currentX;
     touchLastTime = currentTime;
 }, { passive: true });
-
 carousel.addEventListener('touchend', () => {
     if (touchStartX) {
         carousel.style.scrollBehavior = 'smooth';
-        
-        // Aplicar momentum scrolling
         if (Math.abs(touchVelocity) > 0.5) {
             smoothScroll(carousel, carousel.scrollLeft + touchVelocity * 15, 300);
         }
-        
         touchStartX = 0;
     }
 }, { passive: true });
-
-// Intersection Observer para animações de entrada
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
 };
-
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -278,23 +209,16 @@ const observer = new IntersectionObserver((entries) => {
         }
     });
 }, observerOptions);
-
-// Observar elementos para animação
 const animateElements = document.querySelectorAll(
     '.timeline-item, .portfolio-card, .skills-card, .about-card'
 );
-
 animateElements.forEach(el => {
     observer.observe(el);
 });
-
-// Animação dos shapes no hero
 const shapes = document.querySelectorAll('.shape');
 shapes.forEach((shape, index) => {
     shape.style.animationDelay = `${index * 5}s`;
 });
-
-// Efeito parallax suave no hero
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
     const hero = document.querySelector('.hero');
@@ -305,26 +229,18 @@ window.addEventListener('scroll', () => {
         }
     }
 });
-
-// Adicionar efeito de hover nos cards do portfólio
 cards.forEach(card => {
     card.addEventListener('mouseenter', function() {
         this.style.transform = 'translateY(-10px) rotate(2deg)';
     });
-    
     card.addEventListener('mouseleave', function() {
         this.style.transform = 'translateY(0) rotate(0deg)';
     });
 });
-
-// Smooth scroll para o topo ao recarregar
 window.addEventListener('load', () => {
     window.scrollTo(0, 0);
 });
-
-// Adicionar classe de scroll ativo no header
 let ticking = false;
-
 function updateHeader() {
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
@@ -333,38 +249,29 @@ function updateHeader() {
     }
     ticking = false;
 }
-
 window.addEventListener('scroll', () => {
     if (!ticking) {
         window.requestAnimationFrame(updateHeader);
         ticking = true;
     }
 });
-
-// Prevenir comportamento padrão de arrastar imagens
 document.querySelectorAll('img').forEach(img => {
     img.addEventListener('dragstart', (e) => {
         e.preventDefault();
     });
 });
-
-// Adicionar efeito de brilho nos botões
 const buttons = document.querySelectorAll('.btn-primary');
 buttons.forEach(button => {
     button.addEventListener('mouseenter', function() {
         this.style.background = 'linear-gradient(135deg, #00b3b3, #008080)';
     });
-    
     button.addEventListener('mouseleave', function() {
         this.style.background = 'linear-gradient(135deg, #008080, #00b3b3)';
     });
 });
-
-// Animação de contador para números (se necessário no futuro)
 function animateCounter(element, target, duration = 2000) {
     let start = 0;
     const increment = target / (duration / 16);
-    
     const timer = setInterval(() => {
         start += increment;
         if (start >= target) {
@@ -375,8 +282,6 @@ function animateCounter(element, target, duration = 2000) {
         }
     }, 16);
 }
-
-// Lazy loading para imagens (melhora performance)
 if ('IntersectionObserver' in window) {
     const imageObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -390,13 +295,10 @@ if ('IntersectionObserver' in window) {
             }
         });
     });
-
     document.querySelectorAll('img[data-src]').forEach(img => {
         imageObserver.observe(img);
     });
 }
-
-// Adicionar efeito de ripple nos botões sociais
 const socialLinks = document.querySelectorAll('.social-link');
 socialLinks.forEach(link => {
     link.addEventListener('click', function(e) {
@@ -405,21 +307,16 @@ socialLinks.forEach(link => {
         const size = Math.max(rect.width, rect.height);
         const x = e.clientX - rect.left - size / 2;
         const y = e.clientY - rect.top - size / 2;
-        
         ripple.style.width = ripple.style.height = size + 'px';
         ripple.style.left = x + 'px';
         ripple.style.top = y + 'px';
         ripple.classList.add('ripple');
-        
         this.appendChild(ripple);
-        
         setTimeout(() => {
             ripple.remove();
         }, 600);
     });
 });
-
-// Dados dos projetos do portfólio
 const portfolioData = [
     {
         title: 'Projeto Açaí',
@@ -486,8 +383,6 @@ const portfolioData = [
         ]
     }
 ];
-
-// Modal de Detalhes do Projeto
 const portfolioModal = document.getElementById('portfolioModal');
 const modalOverlay = document.getElementById('modalOverlay');
 const modalClose = document.getElementById('modalClose');
@@ -497,18 +392,12 @@ const modalDate = document.getElementById('modalDate');
 const modalDescription = document.getElementById('modalDescription');
 const modalGallery = document.getElementById('modalGallery');
 const portfolioCards = document.querySelectorAll('.portfolio-card');
-
-// Abrir modal
 function openModal(projectIndex) {
     const project = portfolioData[projectIndex];
     if (!project) return;
-
-    // Preencher dados do modal
     modalTitle.textContent = project.title;
     modalDate.textContent = project.date;
     modalDescription.textContent = project.description;
-
-    // Limpar e preencher tags
     modalTags.innerHTML = '';
     project.tags.forEach(tag => {
         const tagElement = document.createElement('span');
@@ -516,47 +405,33 @@ function openModal(projectIndex) {
         tagElement.textContent = tag;
         modalTags.appendChild(tagElement);
     });
-
-    // Limpar e preencher galeria
     modalGallery.innerHTML = '';
     project.images.forEach((imageUrl, index) => {
         const galleryItem = document.createElement('div');
         galleryItem.className = 'modal-gallery-item';
-        
         const img = document.createElement('img');
         img.src = imageUrl;
         img.alt = `${project.title} - Imagem ${index + 1}`;
         img.loading = 'lazy';
-        
         galleryItem.appendChild(img);
         modalGallery.appendChild(galleryItem);
     });
-
-    // Mostrar modal
     portfolioModal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
-
-// Fechar modal
 function closeModal() {
     portfolioModal.classList.remove('active');
     document.body.style.overflow = '';
 }
-
-// Event listeners para abrir modal
 portfolioCards.forEach((card, index) => {
     let cardIsDragging = false;
     let cardStartX = 0;
     let cardStartY = 0;
-
-    // Detectar início do arrasto
     card.addEventListener('mousedown', (e) => {
         cardIsDragging = false;
         cardStartX = e.clientX;
         cardStartY = e.clientY;
     });
-
-    // Detectar movimento do mouse
     card.addEventListener('mousemove', (e) => {
         if (cardStartX !== 0 || cardStartY !== 0) {
             const deltaX = Math.abs(e.clientX - cardStartX);
@@ -566,19 +441,14 @@ portfolioCards.forEach((card, index) => {
             }
         }
     });
-
-    // Abrir modal apenas se não foi arrasto
     card.addEventListener('click', (e) => {
         if (!cardIsDragging) {
             openModal(index);
         }
-        // Reset
         cardIsDragging = false;
         cardStartX = 0;
         cardStartY = 0;
     });
-
-    // Reset ao soltar
     card.addEventListener('mouseup', () => {
         if (cardIsDragging) {
             cardIsDragging = false;
@@ -586,18 +456,14 @@ portfolioCards.forEach((card, index) => {
         cardStartX = 0;
         cardStartY = 0;
     });
-
-    // Para touch devices
     let touchStartX = 0;
     let touchStartY = 0;
     let touchDragging = false;
-
     card.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchDragging = false;
     });
-
     card.addEventListener('touchmove', (e) => {
         if (touchStartX !== 0 || touchStartY !== 0) {
             const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
@@ -607,7 +473,6 @@ portfolioCards.forEach((card, index) => {
             }
         }
     });
-
     card.addEventListener('touchend', (e) => {
         if (!touchDragging) {
             e.preventDefault();
@@ -618,31 +483,22 @@ portfolioCards.forEach((card, index) => {
         touchDragging = false;
     });
 });
-
-// Event listeners para fechar modal
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', closeModal);
-
-// Fechar modal com ESC
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && portfolioModal.classList.contains('active')) {
         closeModal();
     }
 });
-
-// Prevenir scroll do modal quando rolar dentro dele
 const modalContent = document.querySelector('.modal-content');
 if (modalContent) {
     modalContent.addEventListener('wheel', (e) => {
         const { scrollTop, scrollHeight, clientHeight } = modalContent;
         const isAtTop = scrollTop === 0;
         const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-
         if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
             e.preventDefault();
         }
     });
 }
-
 console.log('🚀 Coala Creator Portfolio - Carregado com sucesso!');
-
