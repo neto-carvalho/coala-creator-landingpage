@@ -164,6 +164,7 @@ let touchScrollLeft = 0;
 let touchVelocity = 0;
 let touchLastX = 0;
 let touchLastTime = 0;
+
 carousel.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].pageX;
     touchScrollLeft = carousel.scrollLeft;
@@ -173,29 +174,45 @@ carousel.addEventListener('touchstart', (e) => {
     carousel.style.scrollBehavior = 'auto';
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
     }
 }, { passive: true });
+
 carousel.addEventListener('touchmove', (e) => {
     if (!touchStartX) return;
-    const currentTime = performance.now();
+    e.preventDefault();
     const currentX = e.touches[0].pageX;
-    const deltaX = currentX - touchStartX;
+    const currentTime = performance.now();
     const deltaTime = currentTime - touchLastTime;
-    if (deltaTime > 0) {
+    
+    if (deltaTime > 0 && touchLastX !== 0) {
         touchVelocity = (currentX - touchLastX) / deltaTime;
     }
-    carousel.scrollLeft = touchScrollLeft - deltaX;
+    
     touchLastX = currentX;
     touchLastTime = currentTime;
-}, { passive: true });
+    
+    const deltaX = currentX - touchStartX;
+    carousel.scrollLeft = touchScrollLeft - deltaX;
+}, { passive: false });
+
 carousel.addEventListener('touchend', () => {
     if (touchStartX) {
         carousel.style.scrollBehavior = 'smooth';
-        if (Math.abs(touchVelocity) > 0.5) {
-            smoothScroll(carousel, carousel.scrollLeft + touchVelocity * 15, 300);
+        if (Math.abs(touchVelocity) > 0.3) {
+            const momentum = touchVelocity * 15;
+            smoothScroll(carousel, carousel.scrollLeft + momentum, 300);
         }
         touchStartX = 0;
+        touchLastX = 0;
+        touchVelocity = 0;
     }
+}, { passive: true });
+
+carousel.addEventListener('touchcancel', () => {
+    touchStartX = 0;
+    touchLastX = 0;
+    touchVelocity = 0;
 }, { passive: true });
 const observerOptions = {
     threshold: 0.1,
@@ -219,42 +236,50 @@ const shapes = document.querySelectorAll('.shape');
 shapes.forEach((shape, index) => {
     shape.style.animationDelay = `${index * 5}s`;
 });
-window.addEventListener('scroll', () => {
+let scrollTicking = false;
+function updateHeroShapes() {
     const scrolled = window.pageYOffset;
     const hero = document.querySelector('.hero');
     if (hero) {
         const heroShapes = hero.querySelector('.hero-shapes');
         if (heroShapes) {
-            heroShapes.style.transform = `translateY(${scrolled * 0.5}px)`;
+            heroShapes.style.transform = `translate3d(0, ${scrolled * 0.5}px, 0)`;
         }
     }
-});
+    scrollTicking = false;
+}
+window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+        requestAnimationFrame(updateHeroShapes);
+        scrollTicking = true;
+    }
+}, { passive: true });
 cards.forEach(card => {
     card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-10px) rotate(2deg)';
+        this.style.transform = 'translate3d(0, -10px, 0) rotate(2deg)';
     });
     card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) rotate(0deg)';
+        this.style.transform = 'translate3d(0, 0, 0) rotate(0deg)';
     });
 });
 window.addEventListener('load', () => {
     window.scrollTo(0, 0);
 });
-let ticking = false;
+let headerTicking = false;
 function updateHeader() {
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
     } else {
         header.classList.remove('scrolled');
     }
-    ticking = false;
+    headerTicking = false;
 }
 window.addEventListener('scroll', () => {
-    if (!ticking) {
-        window.requestAnimationFrame(updateHeader);
-        ticking = true;
+    if (!headerTicking) {
+        requestAnimationFrame(updateHeader);
+        headerTicking = true;
     }
-});
+}, { passive: true });
 document.querySelectorAll('img').forEach(img => {
     img.addEventListener('dragstart', (e) => {
         e.preventDefault();
@@ -502,3 +527,4 @@ if (modalContent) {
     });
 }
 console.log('🚀 Coala Creator Portfolio - Carregado com sucesso!');
+

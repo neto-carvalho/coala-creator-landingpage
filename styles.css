@@ -1063,6 +1063,10 @@ body::before {
     -ms-overflow-style: none;
     flex: 1;
     padding: 1rem 0;
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 .portfolio-carousel::-webkit-scrollbar {
     display: none;
@@ -1073,8 +1077,11 @@ body::before {
     border-radius: 25px;
     overflow: hidden;
     box-shadow: var(--shadow-md);
-    transition: var(--transition);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: grab;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 .portfolio-card:active {
     cursor: grabbing;
